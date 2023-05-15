@@ -1,0 +1,87 @@
+<div class="notebook">
+
+<div class="nb-cell html" name="htm1">
+<h2>Validação da distância entre dois pontos do plano cartesiano</h2>
+</div>
+
+<div class="nb-cell program" name="p1">
+distancia(X1, Y1, X2, Y2, D) :- D is sqrt((X1 - X2)**2 + (Y1 - Y2)**2).
+</div>
+
+<div class="nb-cell query" name="q2">
+distancia(1, 2, 4, 6, 5.0)
+</div>
+
+<div class="nb-cell query" name="q1">
+distancia(1, 2, 4, 6, X)
+</div>
+
+<div class="nb-cell html" name="htm2">
+<h2>Validação do maior entre dois números</h2>
+</div>
+
+<div class="nb-cell program" name="p2">
+next(X, R) :- R is X+1.
+maior(X, Y, R) :- R is (X + Y + abs(X-Y))/2.
+</div>
+
+<div class="nb-cell query" name="q3">
+maior(3, 4, 4)
+</div>
+
+<div class="nb-cell query" name="q4">
+maior(3, 4, X)
+</div>
+
+<div class="nb-cell query" name="q5">
+next(4, X)
+</div>
+
+<div class="nb-cell html" name="htm3">
+<h2>Verificando se dois pontos estão na horizontal ou na vertical</h2>
+</div>
+
+<div class="nb-cell program" name="p3">
+horizontal(linha(ponto(2,1),ponto(5,1))).
+vertical(linha(ponto(X,Y1), ponto(X,Y2))) :- Y1 \== Y2.
+</div>
+
+<div class="nb-cell query" name="q6">
+horizontal(linha(ponto(2,1),ponto(5,1)))
+</div>
+
+<div class="nb-cell query" name="q7">
+vertical(linha(ponto(5,3),ponto(5,1)))
+</div>
+
+<div class="nb-cell html" name="htm4">
+<h2>Verificando relação de dependência entre dados de uma base de conhecimento</h2>
+</div>
+
+<div class="nb-cell program" name="p4">
+func(1, ana, 1000.90).
+func(2, bia, 1200.00).
+func(3, ivo, 903.50).
+
+dep(1, ary).
+dep(3, raí).
+dep(3, eva).
+</div>
+
+<div class="nb-cell html" name="htm5">
+<li>Me dê o nome de quem é dependente de ary</li>
+</div>
+
+<div class="nb-cell query" name="q8">
+func(1, N, _), dep(1, ary)
+</div>
+
+<div class="nb-cell html" name="htm6">
+<li>Me dê o código e o nome de quem não depende de ninguém</li>
+</div>
+
+<div class="nb-cell query" name="q9">
+func(C, N, _), \+dep(C, _)
+</div>
+
+</div>

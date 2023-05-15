@@ -1,0 +1,204 @@
+<div class="notebook">
+
+<div class="nb-cell html" name="htm1">
+<img src="https://media.discordapp.net/attachments/897609680073941012/1084531148547444877/Figura1.png" alt="figura_01">
+</div>
+
+<div class="nb-cell html" name="htm2">
+<h2>R1: Crie os fatos para estabelecer quem é o homem e quem é mulher</h2>
+</div>
+
+<div class="nb-cell program" name="p1">
+mulher(ana).
+mulher(eva).
+mulher(bia).
+mulher(clô).
+mulher(lia).
+mulher(gal).
+homem(ivo).
+homem(noé).
+homem(raí).
+homem(gil).
+homem(ary).
+</div>
+
+<div class="nb-cell html" name="htm3">
+<h2>R2: Crie os fatos para estabelecer as reçações de pai e mãe</h2>
+</div>
+
+<div class="nb-cell program" name="p2">
+pai(ivo, eva).
+pai(raí, noé).
+pai(gil, raí).
+pai(gil, clô).
+pai(gil, ary).
+pai(ary, gal).
+mãe(ana, eva).
+mãe(eva, noé).
+mãe(bia, raí).
+mãe(bia, clô).
+mãe(bia, ary).
+mãe(lia, gal).
+</div>
+
+<div class="nb-cell html" name="htm4">
+<h2>R3: Crie a regra gerou(X,Y) tal que X gerou Y se X é pai ou mãe de Y</h2>
+</div>
+
+<div class="nb-cell program" name="p3">
+gerou(X, Y) :- pai(X, Y); mãe(X, Y).
+</div>
+
+<div class="nb-cell html" name="htm6">
+<h2>R4: Crie a regra para estabelecer a relação irmão</h2>
+</div>
+
+<div class="nb-cell program" name="p5">
+irmão(X, Y) :- gerou(P, X),
+    		   gerou(P, Y),
+    		   homem(X),
+    		   X \== Y.
+</div>
+
+<div class="nb-cell html" name="htm7">
+<h2>R5: Crie a regra para estabelecer a relação de irmã</h2>
+</div>
+
+<div class="nb-cell program" name="p6">
+irmã(X, Y) :- gerou(P, X),
+    		  gerou(P, Y),
+    		  mulher(X),
+    		  X \== Y.
+</div>
+
+<div class="nb-cell html" name="htm8">
+<h2>R6: Crie a regra para estabelecer a relação de tio</h2>
+</div>
+
+<div class="nb-cell program" name="p7">
+tio(X, Y) :- irmão(X, P),
+    		 gerou(P, Y),
+    		 homem(X).
+</div>
+
+<div class="nb-cell html" name="htm9">
+<h2>R7: Crie a regra para estabelecer a relação de tia</h2>
+</div>
+
+<div class="nb-cell program" name="p8">
+tia(X, Y) :- irmã(X, P),
+    		 gerou(P, Y),
+    		 mulher(X).
+</div>
+
+<div class="nb-cell html" name="htm10">
+<h2>R8: Crie a regra para estabelecer a relação de avô</h2>
+</div>
+
+<div class="nb-cell program" name="p9">
+avô(X, Y) :- pai(X, P),
+    		 gerou(P, Y).
+</div>
+
+<div class="nb-cell html" name="htm11">
+<h2>R9: Crie a regra para estabelecer a relação de avó</h2>
+</div>
+
+<div class="nb-cell program" name="p10">
+avó(X, Y) :- mãe(X, P),
+    		 gerou(P, Y).
+</div>
+
+<div class="nb-cell html" name="htm12">
+<h2>R10: Codifique as regras equivalentes a sentença: Um casal é formado por duas pessoas que têm filhos em comum</h2>
+</div>
+
+<div class="nb-cell program" name="p11">
+casal(X, Y) :- gerou(X, P),
+    		   gerou(Y, P),
+    		   X \== Y.
+</div>
+
+<div class="nb-cell html" name="htm13">
+<h2>R11: Codifique as regras equivalentes a seguinte sentença: Todo mundo que tem filhos é feliz</h2>
+</div>
+
+<div class="nb-cell program" name="p12">
+feliz(X) :- gerou(X, _).
+</div>
+
+<div class="nb-cell html" name="htm5">
+<h1>Base de Conhecimento Completa</h1>
+</div>
+
+<div class="nb-cell program" name="p4">
+mulher(ana).
+mulher(eva).
+mulher(bia).
+mulher(clô).
+mulher(lia).
+mulher(gal).
+homem(ivo).
+homem(noé).
+homem(raí).
+homem(gil).
+homem(ary).
+
+pai(ivo, eva).
+pai(raí, noé).
+pai(gil, raí).
+pai(gil, clô).
+pai(gil, ary).
+pai(ary, gal).
+mãe(ana, eva).
+mãe(eva, noé).
+mãe(bia, raí).
+mãe(bia, clô).
+mãe(bia, ary).
+mãe(lia, gal).
+
+gerou(X, Y) :- pai(X, Y); 
+    		   mãe(X, Y).
+
+irmão(X, Y) :- gerou(P, X),
+    		   gerou(P, Y),
+    		   homem(X),
+    		   X \== Y.
+
+irmã(X, Y) :- gerou(P, X),
+    		  gerou(P, Y),
+    		  mulher(X),
+    		  X \== Y.
+
+tio(X, Y) :- irmão(X, P),
+    		 gerou(P, Y),
+    		 homem(X).
+
+tia(X, Y) :- irmã(X, P),
+    		 gerou(P, Y),
+    		 mulher(X).
+
+avô(X, Y) :- pai(X, P),
+    		 gerou(P, Y).
+
+avó(X, Y) :- mãe(X, P),
+    		 gerou(P, Y).
+
+casal(X, Y) :- gerou(X, P),
+    		   gerou(Y, P),
+    		   X \== Y.
+
+filho(X, Y) :- gerou(Y, X),
+    		   homem(X).
+
+filha(X, Y) :- gerou(Y, X),
+    		   mulher(X).
+
+feliz(X) :- gerou(X, _).
+</div>
+
+<div class="nb-cell query" name="q1">
+feliz(clô)
+</div>
+
+</div>
