@@ -1,4 +1,26 @@
-import json
+import heapq # => importando o módulo heapq
+
+
+class FilaDePrioridade:
+    
+    def __init__(self):
+        self.fila = []
+        self.indice = 0
+    
+    def inserir(self, item, prioridade):
+        heapq.heappush(self.fila, (prioridade, self.indice, item))
+        self.indice += 1
+
+    def remover(self):
+        return heapq.heappop(self.fila)[-1]
+    
+    def alterarPrioridade(self, item, novaPrioridade):
+        for i, elemento in enumerate(self.fila):
+            if elemento[2] == item:
+                self.fila[i] = (novaPrioridade, elemento[1], item)
+                heapq.heapify(self.fila)
+                break
+
 
 class GrafoListaAdj:
     """
@@ -22,7 +44,7 @@ class GrafoListaAdj:
 
     def V(self):
         """
-        :return int quantidade de vértices.
+        :return int quantidade de vértices. 
         """
         return self.vertices
 
@@ -37,18 +59,18 @@ class GrafoListaAdj:
         return A/2
 
 
-    def addAresta(self, u, v):
+    def addAresta(self, u, v, peso=None):
         '''
         cria uma nova aresta conectando dois vértices
         :param u: int vértice de origem.
         :param v: int vértice de destino.
         '''
         if (self.isDirecionado):
-            self.grafo[u-1].append(v)
+            self.grafo[u-1].append({'nome': v, 'peso': peso})
         else:
             # Isso para grafos não direcionados 
-            self.grafo[u-1].append(v)
-            self.grafo[v-1].append(u)
+            self.grafo[u-1].append({'nome': v, 'peso': peso})
+            self.grafo[v-1].append({'nome': u, 'peso': peso})
 
 
     def adj(self, vertice):
@@ -63,10 +85,10 @@ class GrafoListaAdj:
         """
         :return dict todas as arestas adjacentes para cada vértice.
         """
-        arestasAdjacentes = {f'{i+1}':[] for i in range(0,self.vertices)}
+        arestasAdjacentes = []
         for i, listAdj in enumerate(self.grafo):
             for j in listAdj:
-                arestasAdjacentes[f'{i+1}'].append((i+1,j))
+                arestasAdjacentes.append((i+1,j['nome']))
         return arestasAdjacentes
     
 
@@ -79,7 +101,7 @@ class GrafoListaAdj:
         for i in range(self.vertices):
             string += f'{i+1}:'
             for j in self.grafo[i]:
-                string += f' {j} →'
+                string += f' {j["nome"]}|peso {j["peso"]} →'
             string += '\n'
         return string
     
@@ -110,9 +132,9 @@ class GrafoListaAdj:
         self.tempo += 1
         self.d[u] = self.tempo
         for v in self.adj(u):
-            if self.cor[v] == 'BRANCO':
-                self.pi[v] = u
-                self.__DFS_VISIT(v)
+            if self.cor[v['nome']] == 'BRANCO':
+                self.pi[v['nome']] = u
+                self.__DFS_VISIT(v['nome'])
         self.cor[u] = 'PRETO'
         self.tempo += 1
         self.f[u] = self.tempo
@@ -134,14 +156,74 @@ class GrafoListaAdj:
         while(self.Q):
             u = self.Q.pop(0)
             for v in self.adj(u):
-                if self.cor[v] == "BRANCO":
-                    self.cor[v] = "CINZA"
-                    self.d[v] = self.d[u] + 1
-                    self.pi[v] = u
-                    self.Q.append(v)
+                if self.cor[v['nome']] == "BRANCO":
+                    self.cor[v['nome']] = "CINZA"
+                    self.d[v['nome']] = self.d[u] + 1
+                    self.pi[v['nome']] = u
+                    self.Q.append(v['nome'])
             self.cor[u] = "PRETO"
         return {'pi': self.pi, 'cor': self.cor, 'd': self.d}
+    
+    def __w(self, u, v):
+        """ 
+        Obtém o peso da aresta de u para v
+        :param u: int vértice origem
+        :param v: int vértice destino
+        :return int correspondente ao peso da aresta de u para v
+        """
+        return next(filter(lambda d: d.get('nome') == v, self.adj(u)), None)['peso']
+    
+    def __relax(self, u, v):
+        """
+        Aplica o relaxamento verificando se é possível relaxar de u para v
+        :param u: int vértice origem
+        :param v: int vértice destino
+        """
+        if self.d[v] > self.d[u] + self.__w(u, v):
+            self.d[v] = self.d[u] + self.__w(u, v)
+            self.pi[v] = u
 
+    def __initializeSingleSource(self, s):
+        """
+        Inicializa todos os vértices com inf, exceto o vérice fonte que recebe peso 0
+        :param s: int vértice fonte
+        """
+        self.d = {}
+        self.pi = {}
+        for i in range(1,len(self.grafo)+1):
+            self.d[i] = float('Inf')
+            self.pi[i] = None
+        self.d[s] = 0
+
+    def dijkstra(self, s):
+        """ 
+        Aplica o algoritmo de Dijkstra no grafo partindo de um vértice fonte s
+        :param s: int vértice fonte de onde o algoritmo de Dijkstra vai se iniciar
+        :return list S que é uma lista com o caminho mínimo 
+        """
+        self.__initializeSingleSource(s)
+        S = []
+        self.Q = FilaDePrioridade()
+        for i in range(1, self.V()+1):
+            self.Q.inserir(i, self.d[i])
+        while self.Q.fila:
+            u = int(self.Q.remover())
+            S.append(u)
+            for v in self.adj(u):
+                self.__relax(u, v['nome'])
+                self.Q.alterarPrioridade(v['nome'], self.d[v['nome']])
+        return S, self.d, self.pi
+    
+    def bellman_ford(self, s):
+        self.__initializeSingleSource(s)
+        for i in range(1, self.V()):
+            for aresta in self.arestasAdj():
+                self.__relax(aresta[0], aresta[1])
+        
+        for aresta in self.arestasAdj():
+            if self.d[aresta[1]] > self.d[aresta[0]] + self.__w(aresta[0], aresta[1]):
+                return [True, self.d, self.pi]
+        return [False, self.d, self.pi]
 
 class GrafoMatrizAdj():
     """
@@ -184,8 +266,8 @@ class GrafoMatrizAdj():
         :return list lista de vértices adjacentes a vertice.
         """
         iterable = []
-        for i,u in enumerate(self.grafo):
-            if u[vertice - 1]:
+        for i,u in enumerate(self.grafo[vertice - 1]):
+            if u:
                 iterable.append(i+1)
         return iterable
     
@@ -194,25 +276,25 @@ class GrafoMatrizAdj():
         """
         :return dict todas as arestas adjacentes para cada vértice.
         """
-        arestasAdjacentes = {f'{i+1}':[] for i in range(0, self.vertices)}
+        arestasAdjacentes = []
         for i, row in enumerate(self.grafo):
             for j, checker in enumerate(row):
                 if checker:
-                    arestasAdjacentes[f'{i+1}'].append((i+1,j+1))
+                    arestasAdjacentes.append((i+1,j+1))
         return arestasAdjacentes
 
 
-    def addAresta(self, u, v):
+    def addAresta(self, u, v, peso=1):
         '''
         cria uma nova aresta conectando dois vértices
         :param u: vértice de origem.
         :param v: vértice de destino.
         '''
         if (self.isDirecionado):
-            self.grafo[u-1][v-1] = 1 # trocar = por += para grafos com  múltiplas arestas
+            self.grafo[u-1][v-1] = peso # trocar = por += para grafos com  múltiplas arestas
         else:    
-            self.grafo[u-1][v-1] = 1 # trocar = por += para grafos com  múltiplas arestas
-            self.grafo[v-1][u-1] = 1 
+            self.grafo[u-1][v-1] = peso # trocar = por += para grafos com  múltiplas arestas
+            self.grafo[v-1][u-1] = peso 
 
 
     def showMatrix(self):
@@ -293,6 +375,77 @@ class GrafoMatrizAdj():
                     self.Q.append(v)
             self.cor[u] = "PRETO"
         return {'pi': self.pi, 'cor': self.cor, 'd': self.d}
+    
+
+    def __w(self, u, v):
+        """ 
+        Obtém o peso da aresta de u para v
+        :param u: int vértice origem
+        :param v: int vértice destino
+        :return int correspondente ao peso da aresta de u para v
+        """
+        return self.grafo[u-1][v-1] 
+    
+    def __relax(self, u, v):
+        """
+        Aplica o relaxamento verificando se é possível relaxar de u para v
+        :param u: int vértice origem
+        :param v: int vértice destino
+        """
+        if self.d[v] > self.d[u] + self.__w(u, v):
+            self.d[v] = self.d[u] + self.__w(u, v)
+            self.pi[v] = u
+
+    def __initializeSingleSource(self, s):
+        """
+        Inicializa todos os vértices com inf, exceto o vérice fonte que recebe peso 0
+        :param s: int vértice fonte
+        """
+        self.d = {}
+        self.pi = {}
+        for i in range(1,len(self.grafo)+1):
+            self.d[i] = float('Inf')
+            self.pi[i] = None
+        self.d[s] = 0
+
+    def dijkstra(self, s):
+        """ 
+        Aplica o algoritmo de Dijkstra no grafo partindo de um vértice fonte s
+        :param s: int vértice fonte de onde o algoritmo de Dijkstra vai se iniciar
+        :return list S que é uma lista com o caminho mínimo 
+        """
+        self.__initializeSingleSource(s)
+        S = []
+        self.Q = FilaDePrioridade()
+        for i in range(1, self.V()+1):
+            self.Q.inserir(i, self.d[i])
+        while self.Q.fila:
+            u = int(self.Q.remover())
+            S.append(u)
+            for v in self.adj(u):
+                self.__relax(u, v)
+                self.Q.alterarPrioridade(v, self.d[v])
+        return S, self.d, self.pi
+    
+
+    def bellman_ford(self, s):
+        self.__initializeSingleSource(s)
+        for i in range(1, self.V()):
+            for aresta in self.arestasAdj():
+                self.__relax(aresta[0], aresta[1])
+        
+        for aresta in self.arestasAdj():
+            if self.d[aresta[1]] > self.d[aresta[0]] + self.__w(aresta[0], aresta[1]):
+                return [True, self.d, self.pi]
+        return [False, self.d, self.pi]
+
+converter = {
+            's': 1,
+            'u': 2,
+            'x': 3,
+            'v': 4,
+            'y': 5
+            }
 
 g = GrafoListaAdj(8)
 g.addAresta(8,1)
@@ -313,6 +466,33 @@ print("Vértices adjacentes ao vértice 1: ", g.adj(1))
 print('arestas adjacentes: ', g.arestasAdj())
 print('dfs: ', g.DFS(3))
 print('bfs: ', g.BFS(8))
+# Dijkstra
+gL = GrafoListaAdj(5, True)
+gL.addAresta(converter['s'], converter['u'], 10)
+gL.addAresta(converter['s'], converter['x'], 5)
+gL.addAresta(converter['u'], converter['v'], 1)
+gL.addAresta(converter['u'], converter['x'], 2)
+gL.addAresta(converter['x'], converter['u'], 3)
+gL.addAresta(converter['x'], converter['v'], 9)
+gL.addAresta(converter['x'], converter['y'], 2)
+gL.addAresta(converter['v'], converter['y'], 4)
+gL.addAresta(converter['y'], converter['s'], 7)
+gL.addAresta(converter['y'], converter['v'], 6)
+print(gL.toString())
+s, d, pi = gL.dijkstra(converter['s'])
+print(f'Dijkstra: S= {s}')
+print(f'Dijkstra: d= {d}')
+print(f'Dijkstra: pi= {pi}')
+gBF = GrafoListaAdj(4, True)
+# Bellman-Ford
+gBF.addAresta(1,2,5)
+gBF.addAresta(1,3,4)
+gBF.addAresta(2,4,3)
+gBF.addAresta(3,2,-6)
+gBF.addAresta(4,3,2)
+print(gBF.toString())
+result = gBF.bellman_ford(1)
+print(f"Bellman-Ford:\n{result}")
 
 print('\n')
 
@@ -331,7 +511,37 @@ h.toString()
 h.showMatrix()
 print("Arestas: ",h.A())
 print("Vértices: ",h.V())
-print("Vértices adjacentes ao vértice 1: ",h.adj(1))
+print("Vértices adjacentes ao vértice 1: ",h.adj(2))
 print('arestas adjacentes: ', h.arestasAdj())
 print('dfs: ', h.DFS(8))
-print('dfs: ', h.BFS(8))
+print('bfs: ', h.BFS(8))
+# Dijkstra
+gM = GrafoMatrizAdj(5, True)
+gM.addAresta(converter['s'], converter['u'], 10)
+gM.addAresta(converter['s'], converter['x'], 5)
+gM.addAresta(converter['u'], converter['v'], 1)
+gM.addAresta(converter['u'], converter['x'], 2)
+gM.addAresta(converter['x'], converter['u'], 3)
+gM.addAresta(converter['x'], converter['v'], 9)
+gM.addAresta(converter['x'], converter['y'], 2)
+gM.addAresta(converter['v'], converter['y'], 4)
+gM.addAresta(converter['y'], converter['s'], 7)
+gM.addAresta(converter['y'], converter['v'], 6)
+gM.showMatrix()
+print(gM.adj(1))
+s, d, pi = gM.dijkstra(converter['s'])
+print(f'Dijkstra: S= {s}')
+print(f'Dijkstra: d= {d}')
+print(f'Dijkstra: pi= {pi}')
+# Bellman-Ford
+gBF = GrafoMatrizAdj(4, True)
+gBF.addAresta(1,2,5)
+gBF.addAresta(1,3,4)
+gBF.addAresta(2,4,3)
+gBF.addAresta(3,2,-6)
+gBF.addAresta(4,3,2)
+result = gBF.bellman_ford(1)
+gBF.showMatrix()
+print(f'Bellman-Ford: checker = {result[0]}')
+print(f'Bellman-Ford: d = {result[1]}')
+print(f'Bellman-Ford: pi = {result[2]}')
