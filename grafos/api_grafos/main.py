@@ -1,3 +1,4 @@
+import numpy as np
 import heapq # => importando o módulo heapq
 
 
@@ -171,7 +172,10 @@ class GrafoListaAdj:
         :param v: int vértice destino
         :return int correspondente ao peso da aresta de u para v
         """
-        return next(filter(lambda d: d.get('nome') == v, self.adj(u)), None)['peso']
+        for adj in self.grafo[u-1]:
+            if adj['nome'] == v:
+                return adj['peso']
+        # return next(filter(lambda d: d.get('nome') == v, self.adj(u)), None)['peso']
     
     def __relax(self, u, v):
         """
@@ -215,6 +219,10 @@ class GrafoListaAdj:
         return S, self.d, self.pi
     
     def bellman_ford(self, s):
+        """
+        :param s: int vértice fonte de onde o algoritmo de Bellman-Ford vai se iniciar
+        :return list contendo o verificador booleano do ciclo negativo, a distância mínima de s para cada vértice e o vetor pi de antecessores
+        """
         self.__initializeSingleSource(s)
         for i in range(1, self.V()):
             for aresta in self.arestasAdj():
@@ -224,6 +232,69 @@ class GrafoListaAdj:
             if self.d[aresta[1]] > self.d[aresta[0]] + self.__w(aresta[0], aresta[1]):
                 return [True, self.d, self.pi]
         return [False, self.d, self.pi]
+    
+    def floyd_warshall(self):
+        """
+        :return list[|V|][|V|], list[|V|][|V|] sendo a primeira matriz de distâncias mínimas de cada vértice e a segunda matriz de antecessores
+        """
+        self.A = [[float('Inf')]*self.V() for i in range(self.V())]
+        self.pi = [[None]*self.V() for i in range(self.V())]
+
+        for v in range(1, self.V()+1):
+            for w in range(1, self.V()+1):
+                if v == w:
+                    self.A[v-1][w-1] = 0
+                else:
+                    peso = self.__w(v, w)
+                    if peso:
+                        self.A[v-1][w-1] = peso
+                        self.pi[v-1][w-1] = v
+
+        for k in range(1, self.V()+1):
+            for v in range(1, self.V()+1):  
+                for w in range(1, self.V()+1):
+                    if (self.A[v-1][k-1] + self.A[k-1][w-1]) < self.A[v-1][w-1]:
+                        self.A[v-1][w-1] = self.A[v-1][k-1] + self.A[k-1][w-1]
+                        self.pi[v-1][w-1] = self.pi[k-1][w-1]
+
+        return self.A, self.pi
+    
+    def __DFS_AUX(self, verticeInicial):
+        """
+        :param verticeInicial: int vértice de onde o caminho começa.
+        """
+        if self.cor[verticeInicial] == "BRANCO":
+            self.id[verticeInicial] = self.cont
+            self.__DFS_VISIT_AUX(verticeInicial)
+            
+    def __DFS_VISIT_AUX(self, u):
+        """
+        visita cada vértice e vai percorrendo o caminho recursivamente
+        :param u: int vértice que vai ser visitado.
+        """
+        self.cor[u] = "CINZA"
+        for v in self.adj(u):
+            if self.cor[v['nome']] == 'BRANCO':
+                self.id[v['nome']] = self.cont
+                self.__DFS_VISIT_AUX(v['nome'])
+        self.cor[u] = 'PRETO'
+
+    def componentesConectadas(self):
+        """ 
+        Aplica o DFS com contador para encontrar as componentes conectadas em um Grafo
+        :return int, dict sendo o primeiro a quantidade de componentes conectadas e o segundo os IDs de cada vértice que formam uma componente conectada
+        """
+        self.cor = {}
+        self.id = {}
+        self.cont = 0
+        for vertice in range(1, len(self.grafo)+1):
+            self.cor[vertice] = 'BRANCO'
+        for vertice in range(1, len(self.grafo)+1):
+            if (self.cor[vertice] != 'PRETO'):
+                self.__DFS_AUX(vertice)
+                self.cont += 1
+
+        return self.cont, self.id
 
 class GrafoMatrizAdj():
     """
@@ -429,15 +500,84 @@ class GrafoMatrizAdj():
     
 
     def bellman_ford(self, s):
+        """
+        :param s: int vértice fonte de onde o algoritmo de Bellman-Ford vai se iniciar
+        :return list contendo o verificador booleano do ciclo negativo, a distância mínima de s para cada vértice e o vetor pi de antecessores
+        """
         self.__initializeSingleSource(s)
         for i in range(1, self.V()):
             for aresta in self.arestasAdj():
                 self.__relax(aresta[0], aresta[1])
         
         for aresta in self.arestasAdj():
-            if self.d[aresta[1]] > self.d[aresta[0]] + self.__w(aresta[0], aresta[1]):
+            if (self.d[aresta[1]] > self.d[aresta[0]]) + self.__w(aresta[0], aresta[1]):
                 return [True, self.d, self.pi]
         return [False, self.d, self.pi]
+    
+    def floyd_warshall(self):
+        """
+        :return list[|V|][|V|], list[|V|][|V|] sendo a primeira matriz de distâncias mínimas de cada vértice e a segunda matriz de antecessores
+        """
+        self.A = [[float('Inf')]*self.V() for i in range(self.V())]
+        self.pi = [[None]*self.V() for i in range(self.V())]
+
+        for v in range(1, self.V()+1):
+            for w in range(1, self.V()+1):
+                if v == w:
+                    self.A[v-1][w-1] = 0
+                else:
+                    peso = self.__w(v, w)
+                    if peso:
+                        self.A[v-1][w-1] = peso
+                        self.pi[v-1][w-1] = v
+
+        for k in range(1, self.V()+1):
+            for v in range(1, self.V()+1):  
+                for w in range(1, self.V()+1):
+                    if (self.A[v-1][k-1] + self.A[k-1][w-1]) < self.A[v-1][w-1]:
+                        self.A[v-1][w-1] = self.A[v-1][k-1] + self.A[k-1][w-1]
+                        self.pi[v-1][w-1] = self.pi[k-1][w-1]
+
+        return self.A, self.pi
+    
+    def __DFS_AUX(self, verticeInicial):
+        """
+        :param verticeInicial: int vértice de onde o caminho começa.
+        """
+
+        if self.cor[verticeInicial] == "BRANCO":
+            self.id[verticeInicial] = self.cont
+            self.__DFS_VISIT_AUX(verticeInicial)
+            
+    def __DFS_VISIT_AUX(self, u):
+        """
+        visita cada vértice e vai percorrendo o caminho recursivamente
+        :param u: int vértice que vai ser visitado.
+        """
+        self.cor[u] = "CINZA"
+        for v in self.adj(u):
+            if self.cor[v] == 'BRANCO':
+                self.id[v] = self.cont
+                self.__DFS_VISIT_AUX(v)
+        self.cor[u] = 'PRETO'
+
+    def componentesConectadas(self):
+        """ 
+        Aplica o DFS com contador para encontrar as componentes conectadas em um Grafo
+        :return int, dict sendo o primeiro a quantidade de componentes conectadas e o segundo os IDs de cada vértice que formam uma componente conectada
+        """
+        self.cor = {}
+        self.id = {}
+        self.cont = 0
+        for vertice in range(1, len(self.grafo)+1):
+            self.cor[vertice] = 'BRANCO'
+        for vertice in range(1, len(self.grafo)+1):
+            if (self.cor[vertice] != 'PRETO'):
+                self.__DFS_AUX(vertice)
+                self.cont += 1
+
+        return self.cont, self.id
+
 
 converter = {
             's': 1,
@@ -493,6 +633,37 @@ gBF.addAresta(4,3,2)
 print(gBF.toString())
 result = gBF.bellman_ford(1)
 print(f"Bellman-Ford:\n{result}")
+#Floyd-Warshall
+gFW = GrafoListaAdj(5, True)
+gFW.addAresta(1,5,1)
+gFW.addAresta(1,2,1)
+gFW.addAresta(2,3,1)
+gFW.addAresta(2,4,2)
+gFW.addAresta(3,4,4)
+gFW.addAresta(3,5,2)
+gFW.addAresta(4,1,3)
+gFW.addAresta(5,1,2)
+gFW.addAresta(5,4,1)
+A, pi = gFW.floyd_warshall()
+print('matriz de distância: \n', np.matrix(A))
+print('matriz de antecessores: \n', np.matrix(pi))
+#COMPONENTE CONECTADAS
+gFW = GrafoListaAdj(13)
+gFW.addAresta(1,2)
+gFW.addAresta(1,3)
+gFW.addAresta(1,7)
+gFW.addAresta(6,5)
+gFW.addAresta(6,4)
+gFW.addAresta(5,4)
+gFW.addAresta(5,7)
+gFW.addAresta(8,9)
+gFW.addAresta(10,11)
+gFW.addAresta(10,12)
+gFW.addAresta(10,13)
+gFW.addAresta(12,13)
+cont, ids = gFW.componentesConectadas()
+print('Quantidade de componentes conectadas: \n', cont)
+print('Componentes conectadas: \n', ids)
 
 print('\n')
 
@@ -545,3 +716,34 @@ gBF.showMatrix()
 print(f'Bellman-Ford: checker = {result[0]}')
 print(f'Bellman-Ford: d = {result[1]}')
 print(f'Bellman-Ford: pi = {result[2]}')
+#Floyd-Warshall
+gFW = GrafoMatrizAdj(5, True)
+gFW.addAresta(1,5,1)
+gFW.addAresta(1,2,1)
+gFW.addAresta(2,3,1)
+gFW.addAresta(2,4,2)
+gFW.addAresta(3,4,4)
+gFW.addAresta(3,5,2)
+gFW.addAresta(4,1,3)
+gFW.addAresta(5,1,2)
+gFW.addAresta(5,4,1)
+A, pi = gFW.floyd_warshall()
+print('matriz de distância: \n', np.matrix(A))
+print('matriz de antecessores: \n', np.matrix(pi))
+#COMPONENTE CONECTADAS
+gFW = GrafoMatrizAdj(13)
+gFW.addAresta(1,2)
+gFW.addAresta(1,3)
+gFW.addAresta(1,7)
+gFW.addAresta(6,5)
+gFW.addAresta(6,4)
+gFW.addAresta(5,4)
+gFW.addAresta(5,7)
+gFW.addAresta(8,9)
+gFW.addAresta(10,11)
+gFW.addAresta(10,12)
+gFW.addAresta(10,13)
+gFW.addAresta(12,13)
+cont, ids = gFW.componentesConectadas()
+print('Quantidade de componentes conectadas: \n', cont)
+print('Componentes conectadas: \n', ids)
