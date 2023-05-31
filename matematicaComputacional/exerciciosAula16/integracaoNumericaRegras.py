@@ -64,3 +64,25 @@ print(f"ISr = {simpsonRepetido(xSR)}")
 # n = 1/h
 
 # print("Número de subintevalos: ", math.ceil(n))
+def f(x):
+    return 2*x**2 - x**3
+
+def trapezoidal_integration(f, a, b, n):
+    h = (b - a) / n
+    integral = 0
+
+    for i in range(1, n):
+        x = a + i * h
+        integral += f(x)
+
+    integral += (f(a) + f(b)) / 2
+    integral *= h
+
+    return integral
+
+a = -2.01
+b = -1.99
+n = 1000
+
+result = trapezoidal_integration(f, a, b, n)
+print("Resultado da integral:", result)
